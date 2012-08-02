@@ -6,10 +6,10 @@ s = xmlrpclib.ServerProxy('http://localhost:8000')
 #print s.system.listMethods()
 
 # Print list of available devices
-print s.list_devices()
+print s.device_list()
 
 # List available buttons for a device
-print s.list_buttons('krell_hts')
+print s.deveice_list_buttons('krell_hts')
 
 # Press a button on a device
-print s.press_button('krell_hts', 'on')
+print s.device_press_button('krell_hts', 'on')
