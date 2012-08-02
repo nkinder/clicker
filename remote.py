@@ -221,6 +221,7 @@ class Device:
             # Set the defaults.
             self.host = '127.0.0.1'
             self.port = 8000
+            self.timeout = 5
 
             # See if the config file overrides any defaults.
             if self.config.has_section('http'):
@@ -229,6 +230,9 @@ class Device:
 
                 if self.config.has_option('http', 'port'):
                     self.port = self.config.get('http', 'port')
+
+                if self.config.has_option('http', 'timeout'):
+                    self.timeout = self.config.getint('http', 'timeout')
 
             # Build the URL for each button command and store it
             # in the mapping.  This is more efficient than building
@@ -271,11 +275,16 @@ class Device:
                 logger.debug('Sending {0} to device {1}'.format(self.buttons[button], self.name))
 
                 try:
-                    f = urllib2.urlopen(self.buttons[button])
+                    f = urllib2.urlopen(url=self.buttons[button], timeout=self.timeout)
 
                     logger.debug('----- Received Response -----')
                     logger.debug(f.read())
-                except URLError as e:
+                except urllib2.URLError as e:
+                    # We could have sent the request, but just not received the response back
+                    # before the timeout.  We just log an error on the server side but return
+                    # success to the client, as the action may have taken place.  This is really
+                    # a server side error anyway, and there is nothing that the client can do
+                    # about it.
                     logger.error('Error accessing URL:')
                     logger.error(e.reason);
 
