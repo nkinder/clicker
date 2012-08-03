@@ -1,5 +1,6 @@
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+import argparse
 import daemon
 import fcntl
 import grp
@@ -9,13 +10,11 @@ import os
 import pwd
 import signal
 import socket
+import sys
 import syslog
 import threading
 import ConfigParser
 import remote
-
-# Globals
-server = None
 
 
 # Shutdown signal handler
@@ -61,10 +60,22 @@ class PidFile(object):
         os.remove(self.path)
 
 
-# NGK - don't hardcode path!  Pass it in instead, or set via an
-# environment variable.
-# Load config
-configfile = '/source/clicker/config/server.conf'
+# Get our command-line args.
+parser = argparse.ArgumentParser()
+parser.add_argument("config", help="full path of the server config file")
+parser.add_argument("--debug", help="enable debug logging", action="store_true")
+args = parser.parse_args()
+
+
+# Load server config file.
+configfile = args.config
+try:
+    f = open(configfile, 'r')
+except IOError as e:
+    sys.stderr.write('Error opening the config file:\n')
+    sys.stderr.write('{0}\n'.format(e))
+    sys.exit(1)
+
 config = ConfigParser.RawConfigParser()
 config.read(configfile)
 
@@ -72,9 +83,10 @@ config.read(configfile)
 try:
     pidfile=config.get('main', 'pidfile')
 except ConfigParser.Error:
-    syslog.syslog('Error starting clicker daemon:')
-    syslog.syslog('The pidfile setting must be specified in the [main] section of {0}.'.format(configfile))
-    exit(1)
+    sys.stderr.write('Configuration error:\n')
+    sys.stderr.write('The pidfile setting must be specified in the ' +
+                     '[main] section of {0}.\n'.format(configfile))
+    sys.exit(1)
 
 # Set the user and group to run as.  We default
 # to the current user and group.
@@ -88,22 +100,25 @@ if config.has_option('main', 'user'):
     try:
         user = pwd.getpwnam(username)[2]
     except KeyError:
-        syslog.syslog('Error starting clicker daemon:')
-        syslog.syslog('The specified user does not exist ({0}).'.format(username))
-        exit(1)
+        sys.stderr.write('Configuration error:\n')
+        sys.stderr.write('The specified user does not exist ({0}).\n'.format(username))
+        sys.exit(1)
 
 if config.has_option('main', 'group'):
     groupname = config.get('main', 'group')
     try:
         group = grp.getgrnam(groupname)[2]
     except KeyError:
-        syslog.syslog('Error starting clicker daemon:')
-        syslog.syslog('The specified group does not exist ({0}).'.format(groupname))
-        exit(1)
+        sys.stderr.write('Configuration error:\n')
+        sys.stderr.write('The specified group does not exist ({0}).\n'.format(groupname))
+        sys.exit(1)
 
-# Set condition to 1 for debugging.
-if 0:
-    f = open('/tmp/remote-server.dbg', 'w')
+# Set up the daemon context.  If debug logging is enabled, redirect
+# stderr and stdout to the debug log instead of /dev/null.
+if args.debug:
+    debugfile = '/tmp/clickerd.dbg'
+    sys.stderr.write('Logging debug information to {0}.\n'.format(debugfile))
+    f = open(debugfile, 'a')
     daemon = daemon.DaemonContext(uid=user, gid=group, umask=18,
                                   pidfile=PidFile(pidfile),
                                   stdout=f, stderr=f)
