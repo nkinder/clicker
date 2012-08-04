@@ -1,5 +1,24 @@
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+#!/usr/bin/env python
+
+# Authors: Nathan Kinder <nkinder@redhat.com>
+#
+# Copyright (C) 2012  Nathan Kinder
+# see file 'COPYING' for use and warranty information
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import argparse
 import daemon
 import fcntl
@@ -14,7 +33,9 @@ import sys
 import syslog
 import threading
 import ConfigParser
-import remote
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+import clicker.remote
 
 
 # Shutdown signal handler
@@ -45,9 +66,9 @@ class PidFile(object):
             raise SystemExit("Already running according to " + self.path)
         self.pidfile.seek(0)
         self.pidfile.truncate()
-        self.pidfile.write(str(os.getpid()))
+        os.write(self.pidfile.fileno(), str(os.getpid()))
         self.pidfile.flush()
-        self.pidfile.seek(0)
+        os.fsync(self.pidfile)
         return self.pidfile
 
     def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
@@ -121,12 +142,24 @@ if args.debug:
     f = open(debugfile, 'a')
     daemon = daemon.DaemonContext(uid=user, gid=group, umask=18,
                                   pidfile=PidFile(pidfile),
+                                  detach_process=True,
                                   stdout=f, stderr=f)
 else:
     daemon = daemon.DaemonContext(uid=user, gid=group, umask=18,
-                                  pidfile=PidFile(pidfile))
+                                  pidfile=PidFile(pidfile),
+                                  detach_process=True)
 
-# Daemonize.
+# Daemonize.  The parent exits at this point.  Ideally, we would have
+# a way to have the parent stick around for a bit and get some info
+# back from the child (daemon) process.  This would allow us to have
+# the parent exit with an error if the daemon has an issue starting
+# up (such as the server is already running, etc.).  Right now, the
+# parent will always return 0 once we call daemon.open.
+#
+# Unfortunately, the daemon module does not allow us to do this
+# right now.  We would need to extend the daemon module and allow
+# a parent context to be passed in, which would be used for the
+# parent process after the fork.
 try:
     daemon.open()
 except SystemExit as e:
@@ -136,7 +169,7 @@ except SystemExit as e:
 
 # Configure and begin logging.
 logging.config.fileConfig(configfile)
-logger = logging.getLogger('remoteServer')
+logger = logging.getLogger('clickerLogger')
 
 # Start the XMLRPC server
 logger.info('----- Starting Up -----')
@@ -157,16 +190,17 @@ except socket.error as e:
 # Load controllable devices
 logger.info('----- Loading Devices -----')
 try:
-    devices = remote.load_devices(config.get('main', 'devicedir'))
+    devices = clicker.remote.load_devices(config.get('main', 'devicedir'))
 except:
     logger.error('Unable to load device configuration.');
     logger.error('----- Shutting down -----');
+    raise
     exit(1)
 
 # Load activities
 logger.info('----- Loading Activities -----')
 try:
-    activities = remote.load_activities(config.get('main', 'activitydir'))
+    activities = clicker.remote.load_activities(config.get('main', 'activitydir'))
 except:
     logger.error('Unable to load activity configuration.');
     logger.error('----- Shutting down -----')
@@ -174,15 +208,15 @@ except:
 
 # Register our RPC calls.
 logger.info('----- Registering RPC Calls -----')
-server.register_function(remote.device_list)
-server.register_function(remote.device_info)
-server.register_function(remote.device_list_buttons)
-server.register_function(remote.device_press_button)
-server.register_function(remote.activity_list)
-server.register_function(remote.activity_info)
-server.register_function(remote.activity_start)
-server.register_function(remote.activity_current)
-server.register_function(remote.power_off)
+server.register_function(clicker.remote.device_list)
+server.register_function(clicker.remote.device_info)
+server.register_function(clicker.remote.device_list_buttons)
+server.register_function(clicker.remote.device_press_button)
+server.register_function(clicker.remote.activity_list)
+server.register_function(clicker.remote.activity_info)
+server.register_function(clicker.remote.activity_start)
+server.register_function(clicker.remote.activity_current)
+server.register_function(clicker.remote.power_off)
 
 # Run the server's main loop in a thread
 logger.info('----- Starting Server -----')

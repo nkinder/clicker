@@ -1,0 +1,11 @@
+[Unit]
+Description=Clicker Remote Control Server
+After=syslog.target network.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/clicker/clicker.pid
+ExecStart=/usr/sbin/clickerd /etc/clicker/server.cfg 
+
+[Install]
+WantedBy=multi-user.target

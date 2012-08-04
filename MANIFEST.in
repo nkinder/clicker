@@ -1,0 +1,11 @@
+# Manifest template
+include README
+include COPYING
+include setup.py
+include lib/*.py
+include server/clickerd
+include server/systemd/clickerd.service
+include test/*.py
+include config/*.cfg
+include config/activities/*.cfg
+include config/devices/*.cfg
