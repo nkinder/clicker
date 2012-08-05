@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-PIDFile=/var/run/clicker/clicker.pid
+PIDFile=/var/run/clicker/clickerd.pid
 ExecStart=/usr/sbin/clickerd /etc/clicker/server.cfg 
 
 [Install]

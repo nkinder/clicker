@@ -46,24 +46,64 @@ def shutdown_handler(signum, frame):
     server.shutdown()
 
 
+# Parent process context.
+# 
+# The parent process will use this context after forking.
+#
+# NOTE - this doesn't work yet, as it depends on some
+# changes being put into python-daemon to allow the
+# parent to remain running after forking the child
+# daemon process.
+class MyParent():
+    def __init__(self, pipe):
+        self.pipename = pipename
+
+    def __enter__(self):
+        # Open up the parent side of the pipe used by the daemon
+        # to communicate the server startup status.
+        self.pipe = open(pipename, 'r')
+        status = self.pipe.read()
+        if (status == 'Server Started'):
+            # The daemon started sucessfully!  Have the parent
+            # process exit cleanly.
+            sys.exit(0)
+        else:
+            # The daemon encountered an error starting.  Log the
+            # error message and exit.
+            syslog.syslog(status)
+            sys.exit(1)
+
+    def __exit__(self):
+        pass
+
 # NGK - from http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
 # This class is available under the MIT license.
+#
+# I have some modifications to this class to change the way we write to the pidfile
+# due to some flush problems I encountered as well as adding support for using the
+# startup pipe.
 class PidFile(object):
     """Context manager that locks a pid file.  Implemented as class
     not generator because daemon.py is calling .__exit__() with no parameters
     instead of the None, None, None specified by PEP-343."""
     # pylint: disable=R0903
 
-    def __init__(self, path):
+    def __init__(self, path, pipename):
         self.path = path
         self.pidfile = None
+        self.pipename = pipename
 
     def __enter__(self):
         self.pidfile = open(self.path, "a+")
         try:
             fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:
-            raise SystemExit("Already running according to " + self.path)
+            # Open our pipe to send our startup status to the parent process.
+            pipe = open(pipename, 'w+')
+            pipe.write('Already running according to {0}'.format(self.path))
+            pipe.flush()
+            pipe.close()
+            raise SystemExit('Already running according to {0}'.format(self.path))
         self.pidfile.seek(0)
         self.pidfile.truncate()
         os.write(self.pidfile.fileno(), str(os.getpid()))
@@ -102,7 +142,7 @@ config.read(configfile)
 
 # Get the configured pidfile path.
 try:
-    pidfile=config.get('main', 'pidfile')
+    pidfile = config.get('main', 'pidfile')
 except ConfigParser.Error:
     sys.stderr.write('Configuration error:\n')
     sys.stderr.write('The pidfile setting must be specified in the ' +
@@ -134,6 +174,31 @@ if config.has_option('main', 'group'):
         sys.stderr.write('The specified group does not exist ({0}).\n'.format(groupname))
         sys.exit(1)
 
+# Create a named pipe to allow the parent process to monitor
+# the startup of the daemon process.  It needs to be owned
+# by our server user to allow the daemon to write to it.
+try:
+    pipename = config.get('main', 'startup_pipe')
+except ConfigParser.Error:
+    sys.stderr.write('Configuration error:\n')
+    sys.stderr.write('The startup_pipe setting must be specified in the ' +
+                     '[main] section of {0}.\n'.format(configfile))
+    sys.exit(1)
+
+try:
+    os.mkfifo(pipename)
+except OSError as e:
+    # If the pipe already exists, just continue.
+    if e.errno == 17:
+        pass
+    else:
+        sys.stderr.write('Unable to create startup pipe:\n')
+        sys.stderr.write('{0}'.format(e))
+        sys.exit(1)
+
+os.chown(pipename, user, group)
+
+
 # Set up the daemon context.  If debug logging is enabled, redirect
 # stderr and stdout to the debug log instead of /dev/null.
 if args.debug:
@@ -141,12 +206,18 @@ if args.debug:
     sys.stderr.write('Logging debug information to {0}.\n'.format(debugfile))
     f = open(debugfile, 'a')
     daemon = daemon.DaemonContext(uid=user, gid=group, umask=18,
-                                  pidfile=PidFile(pidfile),
+#
+# NGK - uncomment this once python-daemon adds parent context support.
+#                                  parent=MyParent(pipename),
+                                  pidfile=PidFile(pidfile, pipename),
                                   detach_process=True,
                                   stdout=f, stderr=f)
 else:
     daemon = daemon.DaemonContext(uid=user, gid=group, umask=18,
-                                  pidfile=PidFile(pidfile),
+#
+# NGK - uncomment this once python-daemon adds parent context support.
+#                                  parent=MyParent(pipename),
+                                  pidfile=PidFile(pidfile, pipename),
                                   detach_process=True)
 
 # Daemonize.  The parent exits at this point.  Ideally, we would have
@@ -163,8 +234,9 @@ else:
 try:
     daemon.open()
 except SystemExit as e:
-    syslog.syslog('Error starting clicker daemon:')
-    syslog.syslog('{0}'.format(e))
+    if e.code != 0:
+        syslog.syslog('Error starting clicker daemon ({0})'.format(e))
+
     raise
 
 # Configure and begin logging.
@@ -185,6 +257,13 @@ except socket.error as e:
     logging.error('Unable to bind to {0}:{1}'.format(config.get('main', 'listenhost'),
                                                      config.getint('main', 'listenport')))
     logging.error(e)
+    # Open our pipe to send our startup status to the parent process.
+    pipe = open(pipename, 'w+')
+    pipe.write('Unable to bind to {0}:{1} ({2})'.format(config.get('main', 'listenhost'),
+                                                        config.getint('main', 'listenport'),
+                                                        e))
+    pipe.flush()
+    pipe.close()
     exit(1)
 
 # Load controllable devices
@@ -192,9 +271,13 @@ logger.info('----- Loading Devices -----')
 try:
     devices = clicker.remote.load_devices(config.get('main', 'devicedir'))
 except:
-    logger.error('Unable to load device configuration.');
-    logger.error('----- Shutting down -----');
-    raise
+    logger.error('Unable to load device configuration.')
+    logger.error('----- Shutting down -----')
+    # Open our pipe to send our startup status to the parent process.
+    pipe = open(pipename, 'w+')
+    pipe.write('Unable to load device configuration.')
+    pipe.flush()
+    pipe.close()
     exit(1)
 
 # Load activities
@@ -202,8 +285,13 @@ logger.info('----- Loading Activities -----')
 try:
     activities = clicker.remote.load_activities(config.get('main', 'activitydir'))
 except:
-    logger.error('Unable to load activity configuration.');
+    logger.error('Unable to load activity configuration.')
     logger.error('----- Shutting down -----')
+    # Open our pipe to send our startup status to the parent process.
+    pipe = open(pipename, 'w+')
+    pipe.write('Unable to load activity configuration.')
+    pipe.flush()
+    pipe.close()
     exit(1)
 
 # Register our RPC calls.
@@ -227,11 +315,18 @@ logger.info('Listening on {0}:{1}'.format(config.get('main', 'listenhost'),
                                           config.getint('main', 'listenport')))
 logger.info('----- Server Started -----')
 
+# Open our pipe to send our startup status to the parent process.
+pipe = open(pipename, 'w+')
+pipe.write('Server Started')
+pipe.flush()
+pipe.close()
+
 # Wait here for the shutdown signal.
 signal.signal(signal.SIGTERM, shutdown_handler)
 signal.pause()
 
 logger.info('----- Server Stopped -----')
+os.unlink(pipename)
 exit(0)
 
 
