@@ -23,6 +23,7 @@ Requires(preun): systemd-units
 
 # Runtime requirements
 Requires:        python-daemon
+Requires:        pyserial
 
 
 %description
