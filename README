@@ -8,16 +8,16 @@ The server will run as the user/group you start it as by default.  It
 is recommended to create a system account for the server to run as.  The
 user and group to run as can be specified in the server.cfg config file.
 
-To do this, create a 'clicker' system user and group.  Ensure that this
-user has permission to access the serial ports that are needed by your
-devices.  On Fedora, you can do this by adding your user to the 'dialout'
-group.  Here is a command that accomplishes this:
-
-    useradd -r clicker -G dialout -d / -s /sbin/nologin
+To do this, create a 'clicker' system user.  You should have your group
+setting set to the 'dialout' group to allow access the serial ports that
+are used by your devices.  Simply adding your user to the 'dialout' group
+will not work since the process is run setuid/setgid, so group membership
+is never set.
 
 The default server.cfg file in the source tree has user and group settings
-for 'clicker'.  Comment these lines out if you want to run clicker as the
-user you start the process as.
+for 'clicker' and 'dialout'.  Comment these lines out if you want to run
+clicker as the user you start the process as.  Just note that you will
+need permission to access the serial ports.
 
 The clicker user will need access to create and delete the pidfile that is
 specified in server.cfg.  It is recommended to create a /var/run/clicker
