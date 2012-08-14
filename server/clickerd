@@ -247,7 +247,7 @@ logger = logging.getLogger('clickerLogger')
 logger.info('----- Starting Up -----')
 # Restrict to a particular path.
 class RequestHandler(SimpleXMLRPCRequestHandler):
-    rpc_paths = ('/RPC2',)
+    rpc_paths = ('/clicker',)
 
 try:
     server = SimpleXMLRPCServer((config.get('main', 'listenhost'),

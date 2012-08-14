@@ -1,6 +1,6 @@
 import xmlrpclib
 
-s = xmlrpclib.ServerProxy('http://localhost:8000')
+s = xmlrpclib.ServerProxy('http://localhost:8000/clicker')
 
 # Print list of available methods
 #print s.system.listMethods()
