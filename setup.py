@@ -13,5 +13,6 @@ setup(name='clicker',
       packages=['clicker'],
       data_files=[('/etc/clicker', ['config/server.cfg']),
                   ('/usr/sbin', ['server/clickerd']),
-                  ('/usr/lib/systemd/system', ['server/systemd/clickerd.service'])]
+                  ('/usr/lib/systemd/system', ['server/systemd/clickerd.service']),
+                  ('/etc/tmpfiles.d', ['server/systemd/clickerd.conf'])]
      )

@@ -5,6 +5,7 @@ include setup.py
 include lib/*.py
 include server/clickerd
 include server/systemd/clickerd.service
+include server/systemd/clickerd.conf
 include test/*.py
 include config/*.cfg
 include config/activities/*.cfg

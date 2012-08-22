@@ -83,6 +83,7 @@ fi
 %config(noreplace)%{_sysconfdir}/%{name}/server.cfg
 %dir %{_sysconfdir}/%{name}/activities
 %dir %{_sysconfdir}/%{name}/devices
+%attr(755,root,root) %{_sysconfdir}/tmpfiles.d/%{name}d.conf
 %{_unitdir}/%{name}d.service
 %attr(755,clicker,clicker) %{_localstatedir}/log/%{name}
 %attr(755,clicker,clicker) %{_localstatedir}/run/%{name} 
