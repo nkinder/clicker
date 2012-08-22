@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Switch;
 
 public class DeviceDetailFragment extends ListFragment {
 
@@ -51,6 +52,25 @@ public class DeviceDetailFragment extends ListFragment {
     	return rootView;
     }
     
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+    	super.onActivityCreated(savedInstanceState);
+    	
+    	// If the device has power buttons, set up the power switch.
+    	if (mItem.device.has_power) {
+    		Switch power_switch = (Switch) getActivity().
+    				findViewById(R.id.device_power_button);
+    		
+    		// Make the switch visible.
+    		power_switch.setVisibility(View.VISIBLE);
+    		
+    		// TODO - set initial switch state?
+    	}
+    	
+    	// TODO - show other widgets here.
+    }
+    
+    // Button list callback.
     @Override 
     public void onListItemClick(ListView l, View v, int position, long id) {
     	if (mItem != null) {
@@ -59,7 +79,27 @@ public class DeviceDetailFragment extends ListFragment {
     	}
     }
     
+    // Power switch callback.  This is called by the DeviceListActivity.
+    public void onPowerSwitchClicked(boolean on) {
+    	if (on) {
+    		new PressButtonTask().execute("on");
+    	} else {
+    		new PressButtonTask().execute("off");
+    	}
+    }
+    
+    // TODO - refresh other widgets here too
     public void refreshButtons() {
+    	// Clear the power switch.
+    	Switch power_switch = (Switch) getActivity().
+				findViewById(R.id.device_power_button);
+		
+		// Make the switch visible.
+		if (power_switch != null) {
+			power_switch.setVisibility(View.GONE);
+		}
+		
+    	// Clear the button list.
     	setListAdapter(null);
     }
     

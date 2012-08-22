@@ -37,4 +37,5 @@ public class DeviceDetailActivity extends FragmentActivity {
 
         return super.onOptionsItemSelected(item);
     }
+   
 }

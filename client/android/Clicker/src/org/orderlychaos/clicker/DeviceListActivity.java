@@ -17,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Switch;
 
 public class DeviceListActivity extends FragmentActivity
         implements DeviceListFragment.Callbacks {
@@ -155,19 +156,30 @@ public class DeviceListActivity extends FragmentActivity
         }
     }
     
+    // Power switch callback.
+    public void onPowerSwitchClicked(View view) {
+    	// Find the detail fragment and call it's power switch callback.
+        DeviceDetailFragment detail_frag = (DeviceDetailFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.device_detail_container);
+    	if (detail_frag != null) {
+    		detail_frag.onPowerSwitchClicked(((Switch) view).isChecked());
+    	}
+        
+        // TODO - check device state and set toggle state if necessary?
+    }
+    
     // Helper to refresh the list of devices.
     public void refreshDevices() {
     	((DeviceListFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.device_list))
                 .refreshDevices();
-    	// Clear the list of buttons.  Our button fragment might be
+    	
+    	// Clear the buttons.  Our button fragment might be
     	// empty, so we need to check if it's null first.
     	DeviceDetailFragment detail_frag = (DeviceDetailFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.device_detail_container);
     	if (detail_frag != null) {
-    		((DeviceDetailFragment) getSupportFragmentManager()
-    				.findFragmentById(R.id.device_detail_container))
-    				.refreshButtons();
+    		detail_frag.refreshButtons();
     	}
     }
     

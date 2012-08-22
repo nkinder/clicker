@@ -1,6 +1,6 @@
 package org.orderlychaos.clicker;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.xmlrpc.android.XMLRPCClient;
 import org.xmlrpc.android.XMLRPCException;
@@ -10,9 +10,10 @@ import android.content.SharedPreferences;
 
 public class Device {
 	public String name;
+	public boolean has_power;
 	
 	private String description;
-	private String[] buttons;
+	private ArrayList<String> buttons;
 	private String server_url;
 	
 	// TODO - split buttons out into categories, such as inputs, volume,
@@ -35,16 +36,30 @@ public class Device {
   		this.description = ((Object) server.call("device_info", name)).toString();
       		
   		// Get the list of buttons for this device.
+  		this.buttons = new ArrayList<String>();
   		Object[] button_objs = (Object[]) server.call("device_list_buttons", name);
-  		this.buttons = Arrays.copyOf(button_objs, button_objs.length, String[].class);    	
+  		for (int i = 0; i < button_objs.length; i++) {
+  			buttons.add(button_objs[i].toString());
+  		}  
+  		
+  		// If we have power on/off buttons, remove them from the list
+  		// of normal buttons and create a special power switch.
+  		if (buttons.contains("on") && buttons.contains("off")) {
+  			buttons.remove("on");
+  			buttons.remove("off");
+  			has_power = true;
+  		} else {
+  			has_power = false;
+  		}
+
 	}
 	
 	public String getDescription() {
 		return this.description;
 	}
 	
-	public String[] getButtons() {
-		return this.buttons;
+	public ArrayList<String> getButtons() {
+		return buttons;
 	}
 	
 	public void pressButton(String button) throws XMLRPCException {
@@ -54,6 +69,11 @@ public class Device {
 	
 	@Override
 	public String toString() {
-		return "Name: " + this.name + "\nDescription: " + this.description + "\nButtons: " + Arrays.toString(this.buttons);
+		return "Name: " + this.name + "\nDescription: " +
+				this.description + "\nButtons: " + buttons.toString();
+	}
+	
+	public void refresh() {
+		
 	}
 }
