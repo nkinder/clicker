@@ -64,7 +64,11 @@ public class DeviceDetailFragment extends ListFragment {
     		// Make the switch visible.
     		power_switch.setVisibility(View.VISIBLE);
     		
-    		// TODO - set initial switch state?
+    		// Set the initial switch state to match the status
+    		// returned by the server.
+    		if (mItem.device.getStatusCmds().contains("power")) {
+    			new PowerStatusTask(power_switch).execute();
+    		}
     	}
     	
     	// TODO - show other widgets here.
@@ -88,13 +92,13 @@ public class DeviceDetailFragment extends ListFragment {
     	}
     }
     
-    // TODO - refresh other widgets here too
+    // TODO - clear other widgets here too
     public void refreshButtons() {
     	// Clear the power switch.
     	Switch power_switch = (Switch) getActivity().
 				findViewById(R.id.device_power_button);
 		
-		// Make the switch visible.
+		// Make the switch invisible.
 		if (power_switch != null) {
 			power_switch.setVisibility(View.GONE);
 		}
@@ -134,5 +138,54 @@ public class DeviceDetailFragment extends ListFragment {
     			alert.show();
         	}
         }
+    }
+    
+    // Helper to send power status command asynchronously.  This handles
+    // raising an error dialog if we have trouble talking to the server.
+    // The switch state is set accordingly.
+    private class PowerStatusTask extends AsyncTask<Void, Void, String> {
+    	private Switch power_switch;
+    	private String result;
+    	
+    	public PowerStatusTask(Switch power_switch) {
+    		this.power_switch = power_switch;
+    		result = null;
+    	}
+    	
+    	protected String doInBackground(Void... params) {
+        	String error = null;
+        	
+        	try {
+				result = mItem.device.getStatus("power");
+			} catch (XMLRPCException e) {
+				// Get the error message we should return.
+	        	error = DeviceListActivity.parseXMLRPCError(e, getActivity());
+	        }
+			
+			return error;
+    	}
+    	
+    	protected void onPostExecute(String error) {
+        	if (error != null) {
+        		// Pop up an error dialog.
+    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    			builder.setMessage(error)
+    				.setCancelable(false)
+    				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    					public void onClick(DialogInterface dialog, int id) {
+    						dialog.dismiss();
+    					}
+    				});
+    			AlertDialog alert = builder.create();
+    			alert.show();
+        	} else {
+        		// Set the switch state based on the status result.
+        		if ((result != null) && (result.equals("on"))) {
+    				power_switch.setChecked(true);
+    			} else {
+    				power_switch.setChecked(false);
+    			}
+        	}
+    	}
     }
 }

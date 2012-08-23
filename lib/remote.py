@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import io
 import os
 import re
 import logging
@@ -265,10 +266,12 @@ class Device:
             try:
                 self.connection = serial.Serial(self.terminal, self.baud, self.bytesize, self.parity,
                                                 self.stopbits, self.timeout)
+                self.sio = io.TextIOWrapper(io.BufferedRWPair(self.connection, self.connection))
             except serial.SerialException as e:
                 logger.warning('Unable to open rs232 connection to device {0}'.format(self.name))
                 logger.warning('{0}'.format(e))
                 self.connection = None
+                self.sio = None
 
         elif self.mode == 'http':
             self.mode = MODE_HTTP
@@ -304,10 +307,12 @@ class Device:
             try:
                 self.connection = serial.Serial(self.terminal, self.baud, self.bytesize, self.parity,
                                                 self.stopbits, self.timeout)
+                self.sio = io.TextIOWrapper(io.BufferedRWPair(self.connection, self.connection))
             except serial.SerialException as e:
                 logger.warning('Unable to open rs232 connection to device {0}'.format(self.name))
                 logger.warning('{0}'.format(e))
                 self.connection = None
+                self.sio = None
                 return 1
 
             return 0
@@ -341,7 +346,12 @@ class Device:
                     return ''
 
                 try:
-                    response = self.connection.read(size=self.status_cmds[command].response_size)
+                    if (self.status_cmds[command].response_size == 0):
+                        self.connection.flushInput()
+                        # Use serial io for universal readline support
+                        response = self.sio.readline()
+                    else:
+                        response = self.connection.read(size=self.status_cmds[command].response_size)
                 except serial.SerialException as e:
                     logger.error('Unable to read response from device {0}'.format(self.name))
                     logger.error('{0}'.format(e))
@@ -454,7 +464,7 @@ class StatusCommand:
 
     def get_result(self, response):
         # If the response is not the right size, just pretend the response was empty.
-        if len(response) != self.response_size:
+        if (self.response_size != 0) and (len(response) != self.response_size):
             logger.warning('Incorrect response size (got {0}, expected {1})'.format(len(response),
                                                                                     self.response_size))
             logger.warning('Ignoring response value.')

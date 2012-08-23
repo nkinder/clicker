@@ -14,6 +14,7 @@ public class Device {
 	
 	private String description;
 	private ArrayList<String> buttons;
+	private ArrayList<String> status_cmds;
 	private String server_url;
 	
 	// TODO - split buttons out into categories, such as inputs, volume,
@@ -51,6 +52,13 @@ public class Device {
   		} else {
   			has_power = false;
   		}
+  		
+  		// Get the list of status commands for this device.
+  		status_cmds = new ArrayList<String>();
+  		Object[] status_objs = (Object[]) server.call("device_list_status_cmds", name);
+  		for (int i = 0; i < status_objs.length; i++) {
+  			status_cmds.add(status_objs[i].toString());
+  		}
 
 	}
 	
@@ -62,9 +70,18 @@ public class Device {
 		return buttons;
 	}
 	
+	public ArrayList<String> getStatusCmds() {
+		return status_cmds;
+	}
+	
 	public void pressButton(String button) throws XMLRPCException {
 		XMLRPCClient server = new XMLRPCClient(server_url);
 		server.call("device_press_button", this.name, button);
+	}
+	
+	public String getStatus(String command) throws XMLRPCException {
+		XMLRPCClient server = new XMLRPCClient(server_url);
+		return ((Object) server.call("device_get_status", this.name, command)).toString();
 	}
 	
 	@Override
