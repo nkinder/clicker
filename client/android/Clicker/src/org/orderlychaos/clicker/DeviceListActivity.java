@@ -17,7 +17,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Switch;
 
 public class DeviceListActivity extends FragmentActivity
         implements DeviceListFragment.Callbacks {
@@ -154,18 +153,6 @@ public class DeviceListActivity extends FragmentActivity
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-    
-    // Power switch callback.
-    public void onPowerSwitchClicked(View view) {
-    	// Find the detail fragment and call it's power switch callback.
-        DeviceDetailFragment detail_frag = (DeviceDetailFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.device_detail_container);
-    	if (detail_frag != null) {
-    		detail_frag.onPowerSwitchClicked(((Switch) view).isChecked());
-    	}
-        
-        // TODO - check device state and set toggle state if necessary?
     }
     
     // Helper to refresh the list of devices.

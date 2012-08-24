@@ -8,8 +8,12 @@
     	android:layout_height="wrap_content"
     	android:visibility="gone"
     	android:textOn="Power on"
-    	android:textOff="Power off"
-    	android:onClick="onPowerSwitchClicked"/>
+    	android:textOff="Power off" />
+    
+    <Spinner android:id="@+id/device_input_spinner"
+        android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:visibility="gone" />
         
     <ListView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@id/android:list"

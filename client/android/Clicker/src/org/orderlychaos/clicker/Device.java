@@ -11,16 +11,13 @@ import android.content.SharedPreferences;
 public class Device {
 	public String name;
 	public boolean has_power;
+	public boolean has_inputs;
 	
 	private String description;
 	private ArrayList<String> buttons;
+	private ArrayList<String> inputs;
 	private ArrayList<String> status_cmds;
 	private String server_url;
-	
-	// TODO - split buttons out into categories, such as inputs, volume,
-	// power, navigation, and media_control.  This can be determined by
-	// the button names.  All other buttons should go in the regular buttons
-	// list.
 	
 	public Device(String name, Context context) throws XMLRPCException {
 		this.name = name;
@@ -35,13 +32,27 @@ public class Device {
 
 		// Get the device description.
   		this.description = ((Object) server.call("device_info", name)).toString();
-      		
-  		// Get the list of buttons for this device.
+      	
+  		// TODO - split out navigation, volume, and media player buttons.
+  		// Get the list of buttons and inputs for this device.
   		this.buttons = new ArrayList<String>();
+  		this.inputs = new ArrayList<String>();
   		Object[] button_objs = (Object[]) server.call("device_list_buttons", name);
   		for (int i = 0; i < button_objs.length; i++) {
-  			buttons.add(button_objs[i].toString());
-  		}  
+  			String button = button_objs[i].toString();
+  			if (button.startsWith("input_") && (button.length() > 6)) {
+  				inputs.add(button.substring(6));
+  			} else {
+  				buttons.add(button);
+  			}
+  		}
+  		
+  		// If we have any inputs, set a flag.
+  		if (inputs.isEmpty()) {
+  			has_inputs = false;
+  		} else {
+  			has_inputs = true;
+  		}
   		
   		// If we have power on/off buttons, remove them from the list
   		// of normal buttons and create a special power switch.
@@ -70,6 +81,10 @@ public class Device {
 		return buttons;
 	}
 	
+	public ArrayList<String> getInputs() {
+		return inputs;
+	}
+	
 	public ArrayList<String> getStatusCmds() {
 		return status_cmds;
 	}
@@ -77,6 +92,11 @@ public class Device {
 	public void pressButton(String button) throws XMLRPCException {
 		XMLRPCClient server = new XMLRPCClient(server_url);
 		server.call("device_press_button", this.name, button);
+	}
+	
+	public void selectInput(String input) throws XMLRPCException {
+		XMLRPCClient server = new XMLRPCClient(server_url);
+		server.call("device_press_button", this.name, "input_" + input);
 	}
 	
 	public String getStatus(String command) throws XMLRPCException {
