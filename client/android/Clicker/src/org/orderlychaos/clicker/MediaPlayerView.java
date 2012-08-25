@@ -49,16 +49,19 @@ public class MediaPlayerView extends LinearLayout implements OnClickListener {
 		// Create our buttons.
 		prev_button = new Button(context);
 		prev_button.setText("Prev");
+		prev_button.setOnClickListener(this);
 		addView(prev_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
 		rev_button = new Button(context);
 		rev_button.setText("Rev");
+		rev_button.setOnClickListener(this);
 		addView(rev_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
 		stop_button = new Button(context);
 		stop_button.setText("Stop");
+		stop_button.setOnClickListener(this);
 		addView(stop_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
@@ -70,21 +73,25 @@ public class MediaPlayerView extends LinearLayout implements OnClickListener {
 		
 		pause_button = new Button(context);
 		pause_button.setText("Pause");
+		pause_button.setOnClickListener(this);
 		addView(pause_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
 		fwd_button = new Button(context);
 		fwd_button.setText("Fwd");
+		fwd_button.setOnClickListener(this);
 		addView(fwd_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
 		next_button = new Button(context);
 		next_button.setText("Next");
+		next_button.setOnClickListener(this);
 		addView(next_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
 		record_button = new Button(context);
 		record_button.setText("Record");
+		record_button.setOnClickListener(this);
 		addView(record_button, new LinearLayout.LayoutParams(	
 	            LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
