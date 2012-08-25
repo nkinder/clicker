@@ -20,7 +20,8 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Switch;
 
-public class DeviceDetailFragment extends ListFragment  implements OnItemSelectedListener, OnClickListener {
+public class DeviceDetailFragment extends ListFragment  implements OnItemSelectedListener, OnClickListener,
+			MediaPlayerListener {
 
     public static final String ARG_ITEM_ID = "item_id";
     
@@ -104,6 +105,19 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
     		}
        	}
     	
+    	// If the device has media player buttons, set up the
+    	// media player controls.
+    	if (mItem.device.is_media_player) {
+    		MediaPlayerView media_player = (MediaPlayerView) getActivity().
+    				findViewById(R.id.device_media_player);
+    		
+    		// Make the media player controls visible.
+    		media_player.setVisibility(View.VISIBLE);
+    		
+    		// Register our callback.
+    		media_player.setMediaPlayerListener(this);
+    	}
+    	
     	// TODO - show other widgets here.
     }
     
@@ -148,6 +162,31 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
         // This is required for the spinner callbacks, but we don't use it.
     }
     
+    
+    // Callback for the media player controller
+    public void onMediaPlayerClicked(int button) {
+    	if (mItem.device.is_media_player) {
+    		// Send the proper command asynchronously.
+    		if (button == MediaPlayerView.PLAY) {
+    			new PressButtonTask().execute("play");
+    		} else if (button == MediaPlayerView.PAUSE) {
+    			new PressButtonTask().execute("pause");
+    		} else if (button == MediaPlayerView.STOP) {
+    			new PressButtonTask().execute("stop");
+    		} else if (button == MediaPlayerView.REV) {
+    			new PressButtonTask().execute("rev");
+    		} else if (button == MediaPlayerView.FWD) {
+    			new PressButtonTask().execute("fwd");
+    		} else if (button == MediaPlayerView.PREV) {
+    			new PressButtonTask().execute("prev");
+    		} else if (button == MediaPlayerView.NEXT) {
+    			new PressButtonTask().execute("next");
+    		} else if (button == MediaPlayerView.REC) {
+    			new PressButtonTask().execute("rec");
+    		}
+    	}
+    }
+    
     // TODO - clear other widgets here.
     public void refreshButtons() {
     	// Find our control views.
@@ -155,6 +194,8 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
 				findViewById(R.id.device_power_button);
     	Spinner input_spinner = (Spinner) getActivity().
     			findViewById(R.id.device_input_spinner);
+    	MediaPlayerView media_player = (MediaPlayerView) getActivity().
+				findViewById(R.id.device_media_player);
 		
 		// Make the power switch invisible.
 		if (power_switch != null) {
@@ -169,6 +210,9 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
     		input_spinner.setVisibility(View.GONE);
     		input_spinner.setAdapter(null);
     	}
+		
+		// Make the media player controls invisible.
+		media_player.setVisibility(View.GONE);
     }
     
     // Helper to send the button press asynchronously.  This handles

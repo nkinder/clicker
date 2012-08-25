@@ -12,6 +12,7 @@ public class Device {
 	public String name;
 	public boolean has_power;
 	public boolean has_inputs;
+	public boolean is_media_player;
 	
 	private String description;
 	private ArrayList<String> buttons;
@@ -33,7 +34,7 @@ public class Device {
 		// Get the device description.
   		this.description = ((Object) server.call("device_info", name)).toString();
       	
-  		// TODO - split out navigation, volume, and media player buttons.
+  		// TODO - split out navigation and volume buttons.
   		// Get the list of buttons and inputs for this device.
   		this.buttons = new ArrayList<String>();
   		this.inputs = new ArrayList<String>();
@@ -62,6 +63,22 @@ public class Device {
   			has_power = true;
   		} else {
   			has_power = false;
+  		}
+  		
+  		// If we have media player buttons, remove them from the list of
+  		// normal buttons and create a special media control view.
+  		if (buttons.contains("play") && buttons.contains("pause") &&
+  				buttons.contains("stop") && buttons.contains("rev") &&
+  				buttons.contains("fwd") && buttons.contains("prev") &&
+  				buttons.contains("next")) {
+  			buttons.remove("play");
+  			buttons.remove("pause");
+  			buttons.remove("stop");
+  			buttons.remove("rev");
+  			buttons.remove("fwd");
+  			buttons.remove("prev");
+  			buttons.remove("next");
+  			is_media_player = true;
   		}
   		
   		// Get the list of status commands for this device.
