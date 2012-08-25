@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 public class MediaPlayerView extends LinearLayout implements OnClickListener {
@@ -18,14 +18,14 @@ public class MediaPlayerView extends LinearLayout implements OnClickListener {
 	public static int REC = 8;
 	
 	private MediaPlayerListener listener;
-	private Button play_button;
-	private Button pause_button;
-	private Button stop_button;
-	private Button rev_button;
-	private Button fwd_button;
-	private Button prev_button;
-	private Button next_button;
-	private Button record_button;
+	private ImageButton play_button;
+	private ImageButton pause_button;
+	private ImageButton stop_button;
+	private ImageButton rev_button;
+	private ImageButton fwd_button;
+	private ImageButton prev_button;
+	private ImageButton next_button;
+	private ImageButton record_button;
 	
 	public MediaPlayerView(Context context) {
 		this(context, (AttributeSet)null, false);
@@ -47,50 +47,50 @@ public class MediaPlayerView extends LinearLayout implements OnClickListener {
 		listener = null;
 		
 		// Create our buttons.
-		prev_button = new Button(context);
-		prev_button.setText("Prev");
+		prev_button = new ImageButton(context);
+		prev_button.setImageResource(R.drawable.media_view_prev);
 		prev_button.setOnClickListener(this);
 		addView(prev_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		rev_button = new Button(context);
-		rev_button.setText("Rev");
+		rev_button = new ImageButton(context);
+		rev_button.setImageResource(R.drawable.media_view_rev);
 		rev_button.setOnClickListener(this);
 		addView(rev_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		stop_button = new Button(context);
-		stop_button.setText("Stop");
+		stop_button = new ImageButton(context);
+		stop_button.setImageResource(R.drawable.media_view_stop);
 		stop_button.setOnClickListener(this);
 		addView(stop_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		play_button = new Button(context);
-		play_button.setText("Play");
+		play_button = new ImageButton(context);
+		play_button.setImageResource(R.drawable.media_view_play);
 		play_button.setOnClickListener(this);
 		addView(play_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		pause_button = new Button(context);
-		pause_button.setText("Pause");
+		pause_button = new ImageButton(context);
+		pause_button.setImageResource(R.drawable.media_view_pause);
 		pause_button.setOnClickListener(this);
 		addView(pause_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		fwd_button = new Button(context);
-		fwd_button.setText("Fwd");
+		fwd_button = new ImageButton(context);
+		fwd_button.setImageResource(R.drawable.media_view_fwd);
 		fwd_button.setOnClickListener(this);
 		addView(fwd_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		next_button = new Button(context);
-		next_button.setText("Next");
+		next_button = new ImageButton(context);
+		next_button.setImageResource(R.drawable.media_view_next);
 		next_button.setOnClickListener(this);
 		addView(next_button, new LinearLayout.LayoutParams(	
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 		
-		record_button = new Button(context);
-		record_button.setText("Record");
+		record_button = new ImageButton(context);
+		record_button.setImageResource(R.drawable.media_view_rec);
 		record_button.setOnClickListener(this);
 		addView(record_button, new LinearLayout.LayoutParams(	
 	            LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));

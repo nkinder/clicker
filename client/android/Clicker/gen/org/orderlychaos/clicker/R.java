@@ -16,6 +16,14 @@ public final class R {
         public static final int ic_action_refresh=0x7f020002;
         public static final int ic_action_settings=0x7f020003;
         public static final int ic_launcher=0x7f020004;
+        public static final int media_view_fwd=0x7f020005;
+        public static final int media_view_next=0x7f020006;
+        public static final int media_view_pause=0x7f020007;
+        public static final int media_view_play=0x7f020008;
+        public static final int media_view_prev=0x7f020009;
+        public static final int media_view_rec=0x7f02000a;
+        public static final int media_view_rev=0x7f02000b;
+        public static final int media_view_stop=0x7f02000c;
     }
     public static final class id {
         public static final int activities=0x7f060005;
