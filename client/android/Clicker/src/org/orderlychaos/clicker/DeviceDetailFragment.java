@@ -21,7 +21,7 @@ import android.widget.Spinner;
 import android.widget.Switch;
 
 public class DeviceDetailFragment extends ListFragment  implements OnItemSelectedListener, OnClickListener,
-			MediaPlayerListener {
+			MediaPlayerListener, NavigationListener {
 
     public static final String ARG_ITEM_ID = "item_id";
     
@@ -118,6 +118,19 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
     		media_player.setMediaPlayerListener(this);
     	}
     	
+    	// If the device has navigation buttons, set up the
+    	// navigation control.
+    	if (mItem.device.has_navigation) {
+    		NavigationView navigation_view = (NavigationView) getActivity().
+    				findViewById(R.id.device_navigation);
+    		
+    		// Make the navigation controls visible.
+    		navigation_view.setVisibility(View.VISIBLE);
+    		
+    		// Register our callback.
+    		navigation_view.setNavigationListener(this);
+    	}
+    	
     	// TODO - show other widgets here.
     }
     
@@ -187,6 +200,24 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
     	}
     }
     
+    // Callback for navigation buttons.
+    public void onNavigationClicked(int button) {
+    	if (mItem.device.has_navigation) {
+    		// Send the proper command asynchronously.
+    		if (button == NavigationView.UP) {
+    			new PressButtonTask().execute("up");
+    		} else if (button == NavigationView.DOWN) {
+    			new PressButtonTask().execute("down");
+    		} else if (button == NavigationView.LEFT) {
+    			new PressButtonTask().execute("left");
+    		} else if (button == NavigationView.RIGHT) {
+    			new PressButtonTask().execute("right");
+    		} else if (button == NavigationView.SELECT) {
+    			new PressButtonTask().execute("select");
+    		}
+    	}
+    }
+    
     // TODO - clear other widgets here.
     public void refreshButtons() {
     	// Find our control views.
@@ -196,6 +227,8 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
     			findViewById(R.id.device_input_spinner);
     	MediaPlayerView media_player = (MediaPlayerView) getActivity().
 				findViewById(R.id.device_media_player);
+    	NavigationView navigation_view = (NavigationView) getActivity().
+				findViewById(R.id.device_navigation);
 		
 		// Make the power switch invisible.
 		if (power_switch != null) {
@@ -213,6 +246,9 @@ public class DeviceDetailFragment extends ListFragment  implements OnItemSelecte
 		
 		// Make the media player controls invisible.
 		media_player.setVisibility(View.GONE);
+    		
+		// Make the navigation controls invisible.
+		navigation_view.setVisibility(View.GONE);
     }
     
     // Helper to send the button press asynchronously.  This handles
